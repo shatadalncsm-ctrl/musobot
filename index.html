@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Museum Guide - Multilingual Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #4682B4 0%, #5F9EA0 100%);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-style: italic;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        .language-selector {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            font-size: 16px;
+            background: white;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        .section h2 {
+            color: #4682B4;
+            border-bottom: 2px solid #4682B4;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .quick-questions {
+            grid-column: 1 / -1;
+        }
+        .question-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .question-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        .question-btn:hover {
+            background: linear-gradient(135deg, #5a6268 0%, #343a40 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input:focus, textarea:focus {
+            border-color: #4682B4;
+            outline: none;
+            box-shadow: 0 0 5px rgba(70, 130, 180, 0.5);
+        }
+        button {
+            background: linear-gradient(135deg, #4682B4 0%, #36648B 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #36648B 0%, #254e70 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            min-height: 100px;
+        }
+        .result h3 {
+            color: #4682B4;
+            margin-top: 0;
+        }
+        .info-section {
+            margin-bottom: 20px;
+        }
+        .info-section h3 {
+            color: #4682B4;
+            border-bottom: 2px solid #4682B4;
+            padding-bottom: 5px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #4682B4 0%, #5F9EA0 100%);
+            border-radius: 10px;
+            color: white;
+        }
+        .voice-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+        .voice-btn:hover {
+            background: linear-gradient(135deg, #218838 0%, #1e9e8a 100%);
+            transform: translateY(-2px);
+        }
+        .voice-status {
+            font-size: 14px;
+            color: #666;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ {{ translations.welcome }}</h1>
+            <div class="subtitle">Your personal museum assistant in multiple languages</div>
+        </div>
+        
+        <div class="language-selector">
+            <select id="languageSelect" onchange="changeLanguage()">
+                {% for code, name in languages.items() %}
+                    <option value="{{ code }}" {% if code == current_lang %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="main-content">
+            <div class="section">
+                <h2>❓ {{ translations.ask_question }}</h2>
+                <input type="text" id="questionInput" placeholder="{{ translations.question_placeholder }}">
+                <button onclick="askQuestion()">{{ translations.ask_button }}</button>
+                
+                <!-- Voice input button for questions -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <button id="voiceBtn-question" onclick="toggleVoiceRecording('question')" class="voice-btn">
+                        🎤 Voice Input
+                    </button>
+                    <span id="voiceStatus-question" class="voice-status"></span>
+                </div>
+                
+                <div class="result">
+                    <h3>{{ translations.answer }}</h3>
+                    <div id="answerResult"></div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🗺️ {{ translations.plan_trip }}</h2>
+                <input type="text" id="interestsInput" placeholder="{{ translations.interests }}">
+                <input type="text" id="timeInput" placeholder="{{ translations.time_available }}">
+                <input type="text" id="kidsInput" placeholder="{{ translations.with_kids }}">
+                <button onclick="planTrip()">{{ translations.generate_plan }}</button>
+                
+                <!-- Voice input button for trip planning -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <button id="voiceBtn-trip" onclick="toggleVoiceRecording('trip')" class="voice-btn">
+                        🎤 Voice Input
+                    </button>
+                    <span id="voiceStatus-trip" class="voice-status"></span>
+                </div>
+                
+                <div class="result">
+                    <h3>{{ translations.your_plan }}</h3>
+                    <div id="planResult"></div>
+                </div>
+            </div>
+            
+            <div class="section quick-questions">
+                <h2>⚡ {{ translations.quick_questions }}</h2>
+                <p>{{ translations.ask_about }}</p>
+                <div class="question-grid">
+                    {% for question in standard_questions %}
+                        <button class="question-btn" onclick="setQuestion('{{ question }}')">{{ question }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>ℹ️ {{ translations.museum_info }}</h2>
+            <div id="museumInfo"></div>
+        </div>
+        
+        <div class="footer">
+            <p>🏛️ MusoBot - Your Intelligent Museum Guide | Available in {{ languages|length }} languages</p>
+        </div>
+    </div>
+
+    <script>
+        let currentLang = '{{ current_lang }}';
+        let isRecording = false;
+        
+        function changeLanguage() {
+            const lang = document.getElementById('languageSelect').value;
+            window.location.href = `/?lang=${lang}`;
+        }
+        
+        function setQuestion(question) {
+            document.getElementById('questionInput').value = question;
+            askQuestion();
+        }
+        
+        function askQuestion() {
+            const question = document.getElementById('questionInput').value;
+            if (!question) return;
+            
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: question,
+                    lang: currentLang
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('answerResult').innerText = data.answer || data.error;
+            })
+            .catch(error => {
+                document.getElementById('answerResult').innerText = 'Error: ' + error;
+            });
+        }
+        
+        function planTrip() {
+            const interests = document.getElementById('interestsInput').value;
+            const timeAvailable = document.getElementById('timeInput').value;
+            const withKids = document.getElementById('kidsInput').value;
+            
+            if (!interests || !timeAvailable || !withKids) return;
+            
+            fetch('/plan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    interests: interests,
+                    time_available: timeAvailable,
+                    with_kids: withKids,
+                    lang: currentLang
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('planResult').innerText = data.plan || data.error;
+            })
+            .catch(error => {
+                document.getElementById('planResult').innerText = 'Error: ' + error;
+            });
+        }
+        
+        function loadMuseumInfo() {
+            fetch(`/info?lang=${currentLang}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = `
+                    <div class="info-section">
+                        <h2>${data.name}</h2>
+                        <p><strong>Location:</strong> ${data.location}</p>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>{{ translations.hours }}</h3>
+                        <ul>
+                `;
+                
+                for (const [day, hours] of Object.entries(data.hours)) {
+                    html += `<li><strong>${day}:</strong> ${hours}</li>`;
+                }
+                
+                html += `
+                        </ul>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>{{ translations.tickets }}</h3>
+                        <ul>
+                `;
+                
+                for (const [category, price] of Object.entries(data.ticket_prices)) {
+                    html += `<li><strong>${category}:</strong> ${price}</li>`;
+                }
+                
+                html += `
+                        </ul>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>{{ translations.facilities }}</h3>
+                        <p><strong>Restrooms:</strong> Available on all floors</p>
+                        <p><strong>Cafe:</strong> ${data.facilities.cafe.location} (${data.facilities.cafe.hours})</p>
+                        <p><strong>Gift Shop:</strong> ${data.facilities.gift_shop.location} (${data.facilities.gift_shop.hours})</p>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>{{ translations.tours }}</h3>
+                        <p><strong>Schedule:</strong> ${data.tours.guided_tours.schedule}</p>
+                        <p><strong>Duration:</strong> ${data.tours.guided_tours.duration}</p>
+                        <p><strong>Meeting Point:</strong> ${data.tours.guided_tours.meeting_point}</p>
+                    </div>
+                `;
+                
+                document.getElementById('museumInfo').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('museumInfo').innerText = 'Error loading museum information: ' + error;
+            });
+        }
+        
+        // Voice recording functionality
+        function toggleVoiceRecording(context) {
+            if (isRecording) {
+                stopRecording();
+                return;
+            }
+            
+            startRecording(context);
+        }
+        
+        function startRecording(context) {
+            isRecording = true;
+            const button = document.getElementById(`voiceBtn-${context}`);
+            button.innerHTML = '⏹️ Stop Recording';
+            button.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+            
+            // Show recording status
+            const statusElement = document.getElementById(`voiceStatus-${context}`);
+            if (statusElement) {
+                statusElement.innerHTML = '🎤 Recording... Speak now!';
+            }
+            
+            fetch('/start_recording', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    processVoiceInput(data.text, context);
+                } else {
+                    alert('Voice recognition error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Voice recognition failed');
+            })
+            .finally(() => {
+                stopRecordingUI(context);
+            });
+        }
+        
+        function stopRecording() {
+            isRecording = false;
+            // The recording is handled server-side with timeout
+        }
+        
+        function stopRecordingUI(context) {
+            isRecording = false;
+            const button = document.getElementById(`voiceBtn-${context}`);
+            button.innerHTML = '🎤 Voice Input';
+            button.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+            
+            const statusElement = document.getElementById(`voiceStatus-${context}`);
+            if (statusElement) {
+                statusElement.innerHTML = '';
+            }
+        }
+        
+        function processVoiceInput(text, context) {
+            if (context === 'question') {
+                document.getElementById('questionInput').value = text;
+                askQuestion();
+            } else if (context === 'trip') {
+                // For trip planning, we need to parse the voice input
+                parseTripInput(text);
+            }
+        }
+        
+        function parseTripInput(text) {
+            // Simple parsing logic - you might want to enhance this
+            const lowerText = text.toLowerCase();
+            
+            // Extract interests
+            let interests = '';
+            if (lowerText.includes('history') || lowerText.includes('historical')) {
+                interests = 'history';
+            } else if (lowerText.includes('art') || lowerText.includes('sculpture')) {
+                interests = 'art';
+            } else if (lowerText.includes('science') || lowerText.includes('technology')) {
+                interests = 'science';
+            } else if (lowerText.includes('culture') || lowerText.includes('cultural')) {
+                interests = 'culture';
+            }
+            
+            // Extract time
+            let timeAvailable = '1 hour';
+            if (lowerText.includes('hour')) {
+                const hourMatch = text.match(/(\d+)\s*hour/);
+                if (hourMatch) {
+                    timeAvailable = `${hourMatch[1]} hour${hourMatch[1] > 1 ? 's' : ''}`;
+                }
+            } else if (lowerText.includes('half day') || lowerText.includes('half-day')) {
+                timeAvailable = 'half day';
+            } else if (lowerText.includes('full day') || lowerText.includes('full-day')) {
+                timeAvailable = 'full day';
+            }
+            
+            // Extract kids information
+            let withKids = 'no';
+            if (lowerText.includes('kids') || lowerText.includes('children') || 
+                lowerText.includes('child') || lowerText.includes('family')) {
+                withKids = 'yes';
+            }
+            
+            // Fill the form
+            document.getElementById('interestsInput').value = interests;
+            document.getElementById('timeInput').value = timeAvailable;
+            document.getElementById('kidsInput').value = withKids;
+            
+            // Auto-generate plan
+            setTimeout(() => planTrip(), 500);
+        }
+        
+        // Load museum info when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMuseumInfo();
+        });
+    </script>
+</body>
+</html>
